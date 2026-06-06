@@ -1,0 +1,58 @@
+// Генерация клиента Prisma
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/prisma"
+}
+//Настройка источника данных
+datasource db {
+  provider = "postgresql"
+}
+//таблица user
+model User {
+  id String @id @default(uuid())
+  supabaseId String @unique @map("supabase_id")
+  email String @unique
+  name String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  messages Message[]
+  roomMembers RoomMember[]
+
+  @@map("users")
+}
+
+model Message {
+  id String @id @default(uuid())
+  content String
+  senderId String @map("sender_id")
+  roomId String @map("room_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([senderId])
+  @@map("messages")
+}
+model Room {
+  id String @id @default(uuid())
+  name String @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  messages Message[]
+  roomMembers RoomMember[]
+
+  @@map("rooms")
+}
+
+model RoomMember {
+  userId String @map("user_id")
+  roomId String @map("room_id")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  room Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roomId])
+  @@map("room_members")
+}
